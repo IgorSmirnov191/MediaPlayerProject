@@ -6,7 +6,7 @@ namespace ConsoleMusicPlayer
     internal class Program
     {
         private const string messageRepeat = "Probeer het opnieuw";
-        private const string inputAudioFile = "\nVoer een filename (ex. dir\\file.mp3) in aub of Esc voor abort :";
+        private const string inputAudioFile = "\nVoer een folder in Music + filename (vb. dir\\file.mp3) in aub of Esc voor abort :";
         private const string inputVolumeLevel = "\nVoer een volume in aub of Esc voor abort :";
 
         private static void Player_PlayStateChange(int NewState)
