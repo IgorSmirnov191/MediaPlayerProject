@@ -18,7 +18,7 @@ namespace ConsoleMusicPlayer
         {
             IWMPMedia media = (IWMPMedia)pMediaObject;
             playerStatus = PlayerStatus.Error;
-            MediaInfo = "Media is absent or unknown media error";
+            MediaInfo = "Media is afwezig of onbekende mediafout";
         }
 
         public enum PlayerStatus
@@ -34,16 +34,16 @@ namespace ConsoleMusicPlayer
         /// </summary>
         public enum UserKeys
         {
-            None = -1,
-            Unknown = 0,
-            Esc = 27,
-            Forward = 70,
-            Mute = 77,
-            OpenFile = 79,
-            PlayPause = 80,
-            Reverse = 82,
-            Stop = 83,
-            Volume = 86
+            None,
+            Unknown,
+            Esc,
+            Forward,
+            Mute,
+            OpenFile,
+            PlayPause,
+            Reverse,
+            Stop,
+            Volume
         };
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace ConsoleMusicPlayer
                         (playerPlayStatus == WMPPlayState.wmppsReady &&
                         playerStatus == PlayerStatus.Error))
                     {
-                        if (playerStatus == PlayerStatus.Error) Console.WriteLine("Media Error");
+                        if (playerStatus == PlayerStatus.Error) Console.WriteLine(MediaInfo);
                         if (userKey != UserKeys.Unknown) Console.Write("Wilt een audio file open(o) of ESC om te kunnen stoppen ?");
 
                         if (ReadAndThrowAlarmIfEsc().Key == ConsoleKey.O)
@@ -116,9 +116,7 @@ namespace ConsoleMusicPlayer
                         else { userKey = UserKeys.Unknown; }
                     }
                     else if (playerPlayStatus != WMPPlayState.wmppsUndefined &&
-                        playerPlayStatus != WMPPlayState.wmppsTransitioning &&/*
-                        playerPlayStatus != WMPPlayState.wmppsReconnecting &&
-                        playerPlayStatus != WMPPlayState.wmppsLast &&*/
+                        playerPlayStatus != WMPPlayState.wmppsTransitioning &&
                         playerStatus != PlayerStatus.None &&
                         playerStatus != PlayerStatus.Error)
                     {
@@ -220,10 +218,7 @@ namespace ConsoleMusicPlayer
                 Console.WriteLine();
                 Console.WriteLine(ex.Message);
             }
-            finally
-            {
-                player.controls.stop();
-            }
+
         }
     }
 }
