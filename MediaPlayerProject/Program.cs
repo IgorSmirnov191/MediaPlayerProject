@@ -11,7 +11,7 @@ namespace ConsoleMusicPlayer
         public static string MediaInfo { get; set; }
 
         private const string messageRepeat = "Probeer het opnieuw...";
-        private const string inputAudioFile = "Voer een folder in Music + filename (vb. dir\\file.mp3) in aub of Esc voor abort :";
+        private const string inputAudioFile = "Voer een folder in Music en filename (vb. dir\\file.mp3) in aub of Esc voor abort :";
         private const string inputVolumeLevel = "Voer een volume in aub of Esc voor abort :";
 
         private static void Player_PlayStateChange(int NewState)
@@ -48,24 +48,36 @@ namespace ConsoleMusicPlayer
                     }
             }
         }
-
-        public static ConsoleKeyInfo ReadAndThrowAlarmIfEsc()
+        ///todo string edit (left,right,del,backspace etc)
+        public static string ReadAndThrowAlarmIfEsc()
         {
-            ConsoleKeyInfo cki_KeyError = Console.ReadKey();
+            string inputStr="";
+            ConsoleKeyInfo cki_KeyError;
+            while ((cki_KeyError = Console.ReadKey()).Key != ConsoleKey.Escape)
+            {
+                if (cki_KeyError.Key == ConsoleKey.Enter)
+                {
+                    return inputStr;
+                }
+
+                inputStr += cki_KeyError.KeyChar.ToString();
+
+            }
             if (cki_KeyError.Key == ConsoleKey.Escape)
             {
                 playerStatus = PlayerStatus.Abort;
                 throw new Exception($"Processing is gestopt. {messageRepeat} later");
             }
-            return cki_KeyError;
+          
+            return inputStr;
         }
 
         private static void ChangeVolume(WindowsMediaPlayer player)
         {
             Console.WriteLine($"{inputVolumeLevel} Volume({player.settings.volume}) :");
-            ConsoleKeyInfo cki_Key = ReadAndThrowAlarmIfEsc(); //Todo
-            string inputLevel = cki_Key.KeyChar.ToString() + Console.ReadLine(); //Todo
-
+            //  ConsoleKeyInfo cki_Key = ReadAndThrowAlarmIfEsc(); //Todo
+            //  string inputLevel = cki_Key.KeyChar.ToString() + Console.ReadLine(); //Todo
+            string inputLevel = ReadAndThrowAlarmIfEsc();
             if (int.TryParse(inputLevel, out int level))
             {
                 if (level >= 0 && level <= 100)
@@ -126,14 +138,14 @@ namespace ConsoleMusicPlayer
                             Console.Write("Wilt een audio file open(o) of ESC om te kunnen stoppen ?");
                         }
 
-                        if (ReadAndThrowAlarmIfEsc().Key == ConsoleKey.O)
-                        {
-                            userKey = UserKeys.OpenFile;
-                        }
-                        else
+                        cki_Key = Console.ReadKey();
+                        userKey = TranslateInputToUserKeys(cki_Key.KeyChar);
+
+                        if ((userKey != UserKeys.Esc) && (userKey != UserKeys.OpenFile))
                         {
                             userKey = UserKeys.Unknown;
                         }
+                        
                     }
                     else if (playerPlayStatus != WMPPlayState.wmppsUndefined &&
                         playerPlayStatus != WMPPlayState.wmppsTransitioning &&
@@ -178,8 +190,8 @@ namespace ConsoleMusicPlayer
                                 Console.WriteLine();
                                 Console.WriteLine(inputAudioFile);
 
-                                ConsoleKeyInfo cki_Key_Stop = ReadAndThrowAlarmIfEsc();
-                                string inputFileName = cki_Key_Stop.KeyChar.ToString() + Console.ReadLine();
+                                
+                                string inputFileName = ReadAndThrowAlarmIfEsc(); 
                                 player.URL = System.IO.Path.Combine(musicFolder, inputFileName);
 
                                 userKey = UserKeys.None;
@@ -249,5 +261,6 @@ namespace ConsoleMusicPlayer
                 }
             }
         }
+
     }
 }
