@@ -10,7 +10,7 @@ namespace ConsoleMusicPlayer
         public static PlayerStatus playerStatus { get; set; }
         public static string MediaInfo { get; set; }
 
-        private const string messageRepeat = "Probeer het opnieuw";
+        private const string messageRepeat = "Probeer het opnieuw...";
         private const string inputAudioFile = "Voer een folder in Music + filename (vb. dir\\file.mp3) in aub of Esc voor abort :";
         private const string inputVolumeLevel = "Voer een volume in aub of Esc voor abort :";
 
@@ -60,6 +60,45 @@ namespace ConsoleMusicPlayer
             return cki_KeyError;
         }
 
+        private static void ChangeVolume(WindowsMediaPlayer player)
+        {
+            Console.WriteLine($"{inputVolumeLevel} Volume({player.settings.volume}) :");
+            ConsoleKeyInfo cki_Key = ReadAndThrowAlarmIfEsc(); //Todo
+            string inputLevel = cki_Key.KeyChar.ToString() + Console.ReadLine(); //Todo
+
+            if (int.TryParse(inputLevel, out int level))
+            {
+                if (level >= 0 && level <= 100)
+                {
+                    player.settings.volume = level;
+                }
+                else
+                {
+                    Console.WriteLine($"Volume waarde moet tussen 0 en 100 zijn. {messageRepeat}");
+                    ChangeVolume(player);
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Geen geldig getal. {messageRepeat}");
+                ChangeVolume(player);
+            }
+        }
+
+        private static void PrintMetaData(IWMPMedia media)
+        {
+            Console.WriteLine($"Author : {media.getItemInfo("Author")}");
+            Console.WriteLine($"Bitrate : {media.getItemInfo("Bitrate")}");
+            Console.WriteLine($"Duration : {media.getItemInfo("Duration")}");
+            Console.WriteLine($"FileSize : {media.getItemInfo("FileSize")}");
+            Console.WriteLine($"FileType : {media.getItemInfo("FileType")}");
+            Console.WriteLine($"MediaType : {media.getItemInfo("MediaType")}");
+            Console.WriteLine($"Title : {media.getItemInfo("Title")}");
+            Console.WriteLine($"WM/Genre : {media.getItemInfo("WM/Genre")}");
+            Console.WriteLine($"WM/Track : {media.getItemInfo("WM/Track")}");
+            Console.WriteLine($"WM/Year : {media.getItemInfo("WM/Year")}");
+        }
+
         private static void Main(string[] args)
         {
             ConsoleKeyInfo cki_Key;
@@ -67,7 +106,7 @@ namespace ConsoleMusicPlayer
             player.PlayStateChange +=
                 new WMPLib._WMPOCXEvents_PlayStateChangeEventHandler(Player_PlayStateChange);
             player.MediaError +=
-            new WMPLib._WMPOCXEvents_MediaErrorEventHandler(Player_MediaError);
+                new WMPLib._WMPOCXEvents_MediaErrorEventHandler(Player_MediaError);
             UserKeys userKey = UserKeys.None;
             try
             {
@@ -77,11 +116,24 @@ namespace ConsoleMusicPlayer
                         (playerPlayStatus == WMPPlayState.wmppsReady &&
                         playerStatus == PlayerStatus.Error))
                     {
-                        if (playerStatus == PlayerStatus.Error) Console.WriteLine(MediaInfo); //todo if{}
-                        if (userKey != UserKeys.Unknown) Console.Write("Wilt een audio file open(o) of ESC om te kunnen stoppen ?");//todo if{}
+                        if (playerStatus == PlayerStatus.Error)
+                        {
+                            Console.WriteLine(MediaInfo);
+                        }
 
-                        if (ReadAndThrowAlarmIfEsc().Key == ConsoleKey.O) { userKey = UserKeys.OpenFile; }//todo if{}
-                        else { userKey = UserKeys.Unknown; }//todo if{}
+                        if (userKey != UserKeys.Unknown)
+                        {
+                            Console.Write("Wilt een audio file open(o) of ESC om te kunnen stoppen ?");
+                        }
+
+                        if (ReadAndThrowAlarmIfEsc().Key == ConsoleKey.O)
+                        {
+                            userKey = UserKeys.OpenFile;
+                        }
+                        else
+                        {
+                            userKey = UserKeys.Unknown;
+                        }
                     }
                     else if (playerPlayStatus != WMPPlayState.wmppsUndefined &&
                         playerPlayStatus != WMPPlayState.wmppsTransitioning &&
@@ -90,16 +142,23 @@ namespace ConsoleMusicPlayer
                     {
                         if (userKey == UserKeys.None)
                         {
-                            IWMPMedia media = player.currentMedia;
-                            PrintMetaData(media);
-
-                            if (player.settings.mute) Console.WriteLine("Mute Aan. Tik op Mute(m) om terug aan doen.");//todo if{}
+                            PrintMetaData(player.currentMedia);
                         }
 
                         if (userKey != UserKeys.Unknown)
                         {
                             Console.WriteLine();
                             Console.Write("Wilt audio file Open(o), Play/Pause(p), Forward(f), Stop(s), Volume(v), Mute(m) of ESC om te kunnen stoppen ?");
+                        }
+                        if (player.settings.mute)
+                        {
+                            Console.WriteLine();
+                            Console.WriteLine("Geluid Uit. Tik op Mute(m) om  geluid terug Aan te doen.");
+                        }
+                        if (player.settings.volume == 0)
+                        {
+                            Console.WriteLine();
+                            Console.WriteLine("Volume (0). Zet volume op hoger waarde om geluid terug Aan te doen.");
                         }
                         cki_Key = Console.ReadKey();
                         userKey = TranslateInputToUserKeys(cki_Key.KeyChar);
@@ -171,7 +230,7 @@ namespace ConsoleMusicPlayer
                         default:
                             {
                                 Console.WriteLine();
-                                Console.WriteLine("Een verkeerde toets was gedrukt. " + messageRepeat);
+                                Console.WriteLine($"Een verkeerde toets was gedrukt. {messageRepeat}");
                                 break;
                             }
                     }
@@ -182,46 +241,13 @@ namespace ConsoleMusicPlayer
                 Console.WriteLine();
                 Console.WriteLine(ex.Message);
             }
-            //   finally { player.controls.stop(); }
-        }
-
-        private static void ChangeVolume(WindowsMediaPlayer player)
-        {
-            Console.WriteLine($"{inputVolumeLevel} Volume({player.settings.volume}) :");
-            ConsoleKeyInfo cki_Key = ReadAndThrowAlarmIfEsc(); //Todo
-            string inputLevel = cki_Key.KeyChar.ToString() + Console.ReadLine(); //Todo
-                                                                                 // string inputLevel = Console.ReadLine();
-            if (int.TryParse(inputLevel, out int level))
+            finally
             {
-                if (level >= 0 && level <= 150)
+                if (player != null)
                 {
-                    player.settings.volume = level;
-                }
-                else
-                {
-                    Console.WriteLine($"Volume waarde moet tussen 0 en 100 zijn. {messageRepeat}");
-                    ChangeVolume(player);
+                    player.controls.stop();
                 }
             }
-            else
-            {
-                Console.WriteLine($"Geen geldig getal. {messageRepeat}");
-                ChangeVolume(player);
-            }
-        }
-
-        private static void PrintMetaData(IWMPMedia media)
-        {
-            Console.WriteLine($"Author : {media.getItemInfo("Author")}");
-            Console.WriteLine($"Bitrate : {media.getItemInfo("Bitrate")}");
-            Console.WriteLine($"Duration : {media.getItemInfo("Duration")}");
-            Console.WriteLine($"FileSize : {media.getItemInfo("FileSize")}");
-            Console.WriteLine($"FileType : {media.getItemInfo("FileType")}");
-            Console.WriteLine($"MediaType : {media.getItemInfo("MediaType")}");
-            Console.WriteLine($"Title : {media.getItemInfo("Title")}");
-            Console.WriteLine($"WM/Genre : {media.getItemInfo("WM/Genre")}");
-            Console.WriteLine($"WM/Track : {media.getItemInfo("WM/Track")}");
-            Console.WriteLine($"WM/Year : {media.getItemInfo("WM/Year")}");
         }
     }
 }
