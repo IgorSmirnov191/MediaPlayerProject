@@ -1,5 +1,6 @@
 ﻿using MediaPlayerProject;
 using System;
+using System.Text;
 using WMPLib;
 
 namespace ConsoleMusicPlayer
@@ -48,28 +49,47 @@ namespace ConsoleMusicPlayer
                     }
             }
         }
+
         ///todo string edit (left,right,del,backspace etc)
         public static string ReadAndThrowAlarmIfEsc()
         {
-            string inputStr="";
-            ConsoleKeyInfo cki_KeyError;
-            while ((cki_KeyError = Console.ReadKey()).Key != ConsoleKey.Escape)
+            ConsoleKeyInfo cki_Key;
+            var inputStr = new StringBuilder();
+            int position = Console.CursorLeft;
+            while ((cki_Key = Console.ReadKey(true)).Key != ConsoleKey.Escape)
             {
-                if (cki_KeyError.Key == ConsoleKey.Enter)
+                if (cki_Key.Key == ConsoleKey.Enter)
                 {
-                    return inputStr;
+                    return inputStr.ToString();
                 }
-
-                inputStr += cki_KeyError.KeyChar.ToString();
-
+                if (cki_Key.Key == ConsoleKey.Backspace)
+                {
+                    int pos = Console.CursorLeft - position - 1;
+                    inputStr.Remove(pos, 1);
+                    Console.CursorLeft = position;
+                    Console.Write(new string(' ', inputStr.Length + 1));
+                    Console.CursorLeft = position;
+                    Console.Write(inputStr.ToString());
+                }
+                if (char.IsLetterOrDigit(cki_Key.KeyChar) ||
+                    char.IsWhiteSpace(cki_Key.KeyChar) ||
+                    cki_Key.Key == ConsoleKey.RightWindows ||
+                    char.IsPunctuation(cki_Key.KeyChar)
+                    )
+                {
+                    int pos = Console.CursorLeft - position;
+                    inputStr.Insert(pos, cki_Key.KeyChar);
+                    Console.Write(cki_Key.KeyChar.ToString());
+                    Console.CursorLeft = pos + position + 1;
+                }
             }
-            if (cki_KeyError.Key == ConsoleKey.Escape)
+            if (cki_Key.Key == ConsoleKey.Escape)
             {
                 playerStatus = PlayerStatus.Abort;
                 throw new Exception($"Processing is gestopt. {messageRepeat} later");
             }
-          
-            return inputStr;
+
+            return inputStr.ToString();
         }
 
         private static void ChangeVolume(WindowsMediaPlayer player)
@@ -138,14 +158,14 @@ namespace ConsoleMusicPlayer
                             Console.Write("Wilt een audio file open(o) of ESC om te kunnen stoppen ?");
                         }
 
-                        cki_Key = Console.ReadKey();
+                        cki_Key = Console.ReadKey(true);
                         userKey = TranslateInputToUserKeys(cki_Key.KeyChar);
 
                         if ((userKey != UserKeys.Esc) && (userKey != UserKeys.OpenFile))
                         {
                             userKey = UserKeys.Unknown;
                         }
-                        
+                        Console.Write(userKey.ToString());
                     }
                     else if (playerPlayStatus != WMPPlayState.wmppsUndefined &&
                         playerPlayStatus != WMPPlayState.wmppsTransitioning &&
@@ -172,8 +192,9 @@ namespace ConsoleMusicPlayer
                             Console.WriteLine();
                             Console.WriteLine("Volume (0). Zet volume op hoger waarde om geluid terug Aan te doen.");
                         }
-                        cki_Key = Console.ReadKey();
+                        cki_Key = Console.ReadKey(true);
                         userKey = TranslateInputToUserKeys(cki_Key.KeyChar);
+                        Console.Write(userKey.ToString());
                     }
 
                     switch (userKey)
@@ -190,8 +211,7 @@ namespace ConsoleMusicPlayer
                                 Console.WriteLine();
                                 Console.WriteLine(inputAudioFile);
 
-                                
-                                string inputFileName = ReadAndThrowAlarmIfEsc(); 
+                                string inputFileName = ReadAndThrowAlarmIfEsc();
                                 player.URL = System.IO.Path.Combine(musicFolder, inputFileName);
 
                                 userKey = UserKeys.None;
@@ -261,6 +281,5 @@ namespace ConsoleMusicPlayer
                 }
             }
         }
-
     }
 }
