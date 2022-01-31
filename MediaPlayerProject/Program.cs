@@ -12,8 +12,8 @@ namespace ConsoleMusicPlayer
         public static string MediaInfo { get; set; }
 
         private const string messageRepeat = "Probeer het opnieuw...";
-        private const string inputAudioFile = "Voer een folder in Music en filename (vb. dir\\file.mp3) in aub of Esc voor abort :";
-        private const string inputVolumeLevel = "Voer een volume in aub of Esc voor abort :";
+        private const string inputAudioFile = "Voer een folder in MyMusic en filename (vb. dir\\file.mp3) of ESC voor abort :";
+        private const string inputVolumeLevel = "Voer een <V>olume in of ESC voor abort :";
 
         private static void Player_PlayStateChange(int NewState)
         {
@@ -50,37 +50,59 @@ namespace ConsoleMusicPlayer
             }
         }
 
-        ///todo string edit (left,right,del,backspace etc)
         public static string ReadAndThrowAlarmIfEsc()
         {
             ConsoleKeyInfo cki_Key;
             var inputStr = new StringBuilder();
-            int position = Console.CursorLeft;
+            int offset = Console.CursorLeft;
             while ((cki_Key = Console.ReadKey(true)).Key != ConsoleKey.Escape)
             {
+                int location = Console.CursorLeft - offset;
                 if (cki_Key.Key == ConsoleKey.Enter)
                 {
                     return inputStr.ToString();
                 }
-                if (cki_Key.Key == ConsoleKey.Backspace)
+
+                if (cki_Key.Key == ConsoleKey.Backspace && location > 0)
                 {
-                    int pos = Console.CursorLeft - position - 1;
-                    inputStr.Remove(pos, 1);
-                    Console.CursorLeft = position;
+                    inputStr.Remove(location - 1, 1);
+                    Console.CursorLeft = offset;
                     Console.Write(new string(' ', inputStr.Length + 1));
-                    Console.CursorLeft = position;
+                    Console.CursorLeft = offset;
                     Console.Write(inputStr.ToString());
+                    Console.CursorLeft = location + offset - 1;
                 }
-                if (char.IsLetterOrDigit(cki_Key.KeyChar) ||
+
+                if (cki_Key.Key == ConsoleKey.LeftArrow && location > 0)
+                {
+                    Console.CursorLeft--;
+                }
+
+                if (cki_Key.Key == ConsoleKey.RightArrow && location < inputStr.Length)
+                {
+                    Console.CursorLeft++;
+                }
+
+                if (cki_Key.Key == ConsoleKey.Delete && location < inputStr.Length)
+                {
+                    inputStr.Remove(location, 1);
+                    Console.CursorLeft = offset;
+                    Console.Write(new string(' ', inputStr.Length + 1));
+                    Console.CursorLeft = offset;
+                    Console.Write(inputStr.ToString());
+                    Console.CursorLeft = offset + location;
+                }
+
+                if (cki_Key.Key != ConsoleKey.Tab &&
+                   (char.IsLetterOrDigit(cki_Key.KeyChar) ||
                     char.IsWhiteSpace(cki_Key.KeyChar) ||
                     cki_Key.Key == ConsoleKey.RightWindows ||
-                    char.IsPunctuation(cki_Key.KeyChar)
+                    char.IsPunctuation(cki_Key.KeyChar))
                     )
                 {
-                    int pos = Console.CursorLeft - position;
-                    inputStr.Insert(pos, cki_Key.KeyChar);
+                    inputStr.Insert(location, cki_Key.KeyChar);
                     Console.Write(cki_Key.KeyChar.ToString());
-                    Console.CursorLeft = pos + position + 1;
+                    Console.CursorLeft = location + offset + 1;
                 }
             }
             if (cki_Key.Key == ConsoleKey.Escape)
@@ -95,8 +117,6 @@ namespace ConsoleMusicPlayer
         private static void ChangeVolume(WindowsMediaPlayer player)
         {
             Console.WriteLine($"{inputVolumeLevel} Volume({player.settings.volume}) :");
-            //  ConsoleKeyInfo cki_Key = ReadAndThrowAlarmIfEsc(); //Todo
-            //  string inputLevel = cki_Key.KeyChar.ToString() + Console.ReadLine(); //Todo
             string inputLevel = ReadAndThrowAlarmIfEsc();
             if (int.TryParse(inputLevel, out int level))
             {
@@ -150,12 +170,13 @@ namespace ConsoleMusicPlayer
                     {
                         if (playerStatus == PlayerStatus.Error)
                         {
+                            Console.WriteLine();
                             Console.WriteLine(MediaInfo);
                         }
 
                         if (userKey != UserKeys.Unknown)
                         {
-                            Console.Write("Wilt een audio file open(o) of ESC om te kunnen stoppen ?");
+                            Console.Write("Wilt een audio file <O>pen of ESC om te kunnen stoppen ?");
                         }
 
                         cki_Key = Console.ReadKey(true);
@@ -174,29 +195,28 @@ namespace ConsoleMusicPlayer
                     {
                         if (userKey == UserKeys.None)
                         {
-                            PrintMetaData(player.currentMedia);
-                        }
-
-                        if (userKey != UserKeys.Unknown)
-                        {
                             Console.WriteLine();
-                            Console.Write("Wilt audio file Open(o), Play/Pause(p), Forward(f), Stop(s), Volume(v), Mute(m) of ESC om te kunnen stoppen ?");
+                            PrintMetaData(player.currentMedia);
                         }
                         if (player.settings.mute)
                         {
                             Console.WriteLine();
-                            Console.WriteLine("Geluid Uit. Tik op Mute(m) om  geluid terug Aan te doen.");
+                            Console.WriteLine("Geluid Uit. Tik op <M>ute om  geluid terug Aan te doen.");
                         }
                         if (player.settings.volume == 0)
                         {
                             Console.WriteLine();
-                            Console.WriteLine("Volume (0). Zet volume op hoger waarde om geluid terug Aan te doen.");
+                            Console.WriteLine("Volume (0). Zet <V>olume op hoger waarde om geluid terug Aan te doen.");
+                        }
+                        if (userKey != UserKeys.Unknown)
+                        {
+                            Console.WriteLine();
+                            Console.Write("Wilt audio file <O>pen, <P>lay/<P>ause, <F>orward, <S>top, <V>olume, <M>ute of ESC om te kunnen stoppen ?");
                         }
                         cki_Key = Console.ReadKey(true);
                         userKey = TranslateInputToUserKeys(cki_Key.KeyChar);
                         Console.Write(userKey.ToString());
                     }
-
                     switch (userKey)
                     {
                         case UserKeys.Esc:
