@@ -9,11 +9,11 @@ namespace ConsoleMusicPlayer
     {
         public static WMPPlayState playerPlayStatus { get; set; }
         public static PlayerStatus playerStatus { get; set; }
-        public static string MediaInfo { get; set; }
 
         private const string messageRepeat = "Probeer het opnieuw...";
         private const string inputAudioFile = "Voer een folder in MyMusic en filename (vb. dir\\file.mp3) of ESC voor abort :";
         private const string inputVolumeLevel = "Voer een <V>olume in of ESC voor abort :";
+        private const string mediaErrorInfo = "Media is afwezig of onbekende mediafout";
 
         private static void Player_PlayStateChange(int NewState)
         {
@@ -24,7 +24,6 @@ namespace ConsoleMusicPlayer
         private static void Player_MediaError(object pMediaObject)
         {
             playerStatus = PlayerStatus.Error;
-            MediaInfo = "Media is afwezig of onbekende mediafout";
         }
 
         /// <summary>
@@ -101,7 +100,8 @@ namespace ConsoleMusicPlayer
                     )
                 {
                     inputStr.Insert(location, cki_Key.KeyChar);
-                    Console.Write(cki_Key.KeyChar.ToString());
+                    Console.CursorLeft = offset;
+                    Console.Write(inputStr.ToString());
                     Console.CursorLeft = location + offset + 1;
                 }
             }
@@ -171,7 +171,7 @@ namespace ConsoleMusicPlayer
                         if (playerStatus == PlayerStatus.Error)
                         {
                             Console.WriteLine();
-                            Console.WriteLine(MediaInfo);
+                            Console.WriteLine(mediaErrorInfo);
                         }
 
                         if (userKey != UserKeys.Unknown)
