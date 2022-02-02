@@ -10,11 +10,6 @@ namespace ConsoleMusicPlayer
         public static WMPPlayState playerPlayStatus { get; set; }
         public static PlayerStatus playerStatus { get; set; }
 
-        private const string messageRepeat = "Probeer het opnieuw...";
-        private const string inputAudioFile = "Voer een folder in MyMusic en filename (vb. dir\\file.mp3) of ESC voor abort :";
-        private const string inputVolumeLevel = "Voer een <V>olume in of ESC voor abort :";
-        private const string mediaErrorInfo = "Media is afwezig of onbekende mediafout";
-
         private static void Player_PlayStateChange(int NewState)
         {
             playerPlayStatus = (WMPPlayState)NewState;
@@ -49,12 +44,12 @@ namespace ConsoleMusicPlayer
             }
         }
 
-        public static string ReadAndThrowAlarmIfEsc()
+        public static string SimpleUserInputParser(ConsoleKey CancelInputKey)
         {
             ConsoleKeyInfo cki_Key;
             var inputStr = new StringBuilder();
             int offset = Console.CursorLeft;
-            while ((cki_Key = Console.ReadKey(true)).Key != ConsoleKey.Escape)
+            while ((cki_Key = Console.ReadKey(true)).Key != CancelInputKey)
             {
                 int location = Console.CursorLeft - offset;
                 if (cki_Key.Key == ConsoleKey.Enter)
@@ -105,10 +100,10 @@ namespace ConsoleMusicPlayer
                     Console.CursorLeft = location + offset + 1;
                 }
             }
-            if (cki_Key.Key == ConsoleKey.Escape)
+            if (cki_Key.Key == CancelInputKey)
             {
                 playerStatus = PlayerStatus.Abort;
-                throw new Exception($"Processing is gestopt. {messageRepeat} later");
+                throw new Exception($"Processing is gestopt. {StringResources.MessageRepeat} later");
             }
 
             return inputStr.ToString();
@@ -116,8 +111,8 @@ namespace ConsoleMusicPlayer
 
         private static void ChangeVolume(WindowsMediaPlayer player)
         {
-            Console.WriteLine($"{inputVolumeLevel} Volume({player.settings.volume}) :");
-            string inputLevel = ReadAndThrowAlarmIfEsc();
+            Console.WriteLine($"{StringResources.InputVolumeLevel} Volume({player.settings.volume}) :");
+            string inputLevel = SimpleUserInputParser(ConsoleKey.Escape);
             if (int.TryParse(inputLevel, out int level))
             {
                 if (level >= 0 && level <= 100)
@@ -126,13 +121,13 @@ namespace ConsoleMusicPlayer
                 }
                 else
                 {
-                    Console.WriteLine($"Volume waarde moet tussen 0 en 100 zijn. {messageRepeat}");
+                    Console.WriteLine($"{StringResources.VolumeLevelInfo} {StringResources.MessageRepeat}");
                     ChangeVolume(player);
                 }
             }
             else
             {
-                Console.WriteLine($"Geen geldig getal. {messageRepeat}");
+                Console.WriteLine($"{StringResources.VolumeLevelErrorInfo} {StringResources.MessageRepeat}");
                 ChangeVolume(player);
             }
         }
@@ -171,12 +166,12 @@ namespace ConsoleMusicPlayer
                         if (playerStatus == PlayerStatus.Error)
                         {
                             Console.WriteLine();
-                            Console.WriteLine(mediaErrorInfo);
+                            Console.WriteLine(StringResources.MediaErrorInfo);
                         }
 
                         if (userKey != UserKeys.Unknown)
                         {
-                            Console.Write("Wilt een audio file <O>pen of ESC om te kunnen stoppen ?");
+                            Console.Write(StringResources.OpenFileUserMenuItem);
                         }
 
                         cki_Key = Console.ReadKey(true);
@@ -201,17 +196,17 @@ namespace ConsoleMusicPlayer
                         if (player.settings.mute)
                         {
                             Console.WriteLine();
-                            Console.WriteLine("Geluid Uit. Tik op <M>ute om  geluid terug Aan te doen.");
+                            Console.WriteLine(StringResources.MutingInfo);
                         }
                         if (player.settings.volume == 0)
                         {
                             Console.WriteLine();
-                            Console.WriteLine("Volume (0). Zet <V>olume op hoger waarde om geluid terug Aan te doen.");
+                            Console.WriteLine(StringResources.VolumeNullLevelInfo);
                         }
                         if (userKey != UserKeys.Unknown)
                         {
                             Console.WriteLine();
-                            Console.Write("Wilt audio file <O>pen, <P>lay/<P>ause, <F>orward, <S>top, <V>olume, <M>ute of ESC om te kunnen stoppen ?");
+                            Console.Write(StringResources.LongUserMenu);
                         }
                         cki_Key = Console.ReadKey(true);
                         userKey = TranslateInputToUserKeys(cki_Key.KeyChar);
@@ -222,16 +217,16 @@ namespace ConsoleMusicPlayer
                         case UserKeys.Esc:
                             {
                                 playerStatus = PlayerStatus.Abort;
-                                throw new Exception($"Processing is gestopt. {messageRepeat} later");
+                                throw new Exception($"Processing is gestopt. {StringResources.MessageRepeat} later");
                             }
 
                         case UserKeys.OpenFile:
                             {
                                 string musicFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
                                 Console.WriteLine();
-                                Console.WriteLine(inputAudioFile);
+                                Console.WriteLine(StringResources.InputAudioFile);
 
-                                string inputFileName = ReadAndThrowAlarmIfEsc();
+                                string inputFileName = SimpleUserInputParser(ConsoleKey.Escape);
                                 player.URL = System.IO.Path.Combine(musicFolder, inputFileName);
 
                                 userKey = UserKeys.None;
@@ -282,7 +277,7 @@ namespace ConsoleMusicPlayer
                         default:
                             {
                                 Console.WriteLine();
-                                Console.WriteLine($"Een verkeerde toets was gedrukt. {messageRepeat}");
+                                Console.WriteLine($"Een verkeerde toets was gedrukt. {StringResources.MessageRepeat}");
                                 break;
                             }
                     }
