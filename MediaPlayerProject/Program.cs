@@ -171,7 +171,7 @@ namespace ConsoleMusicPlayer
 
                         if (userKey != UserKeys.Unknown)
                         {
-                            Console.Write(StringResources.OpenFileUserMenuItem);
+                            Console.Write(StringResources.ShortUserMenu);
                         }
 
                         cki_Key = Console.ReadKey(true);

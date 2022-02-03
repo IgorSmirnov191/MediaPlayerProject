@@ -67,6 +67,7 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="MediaPlayer.drawio.png" />
     <Content Include="MediaPlayer_StateDiag.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

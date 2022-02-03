@@ -6,7 +6,7 @@
         public static string InputAudioFile = "Voer een folder in MyMusic en filename (vb. dir\\file.mp3) of ESC voor abort :";
         public static string InputVolumeLevel = "Voer een <V>olume in of ESC voor abort :";
         public static string MediaErrorInfo = "Media is afwezig of onbekende mediafout";
-        public static string OpenFileUserMenuItem = "Wilt een audio file <O>pen of ESC om te kunnen stoppen ?";
+        public static string ShortUserMenu = "Wilt een audio file <O>pen of ESC om te kunnen stoppen ?";
         public static string LongUserMenu = "Wilt audio file <O>pen, <P>lay/<P>ause, <F>orward, <S>top, <V>olume, <M>ute of ESC om te kunnen stoppen ?";
         public static string VolumeLevelInfo = "Volume waarde moet tussen 0 en 100 zijn.";
         public static string VolumeLevelErrorInfo = "Geen geldig volume level waarde.";
