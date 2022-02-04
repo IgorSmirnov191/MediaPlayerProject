@@ -13,6 +13,11 @@
         public static string MutingInfo = "Muteren. Tik op <M>ute om  geluid terug Aan te doen.";
         public static string VolumeNullLevelInfo = "Volume (0). Zet <V>olume op hoger waarde om geluid terug Aan te doen.";
 
+        public static string[] metadataquery = { "Author", "UserRating"
+                , "Bitrate", "Duration", "FileSize", "FileType", "MediaType"
+                , "Title", "WM/AlbumArtist", "WM/AlbumTitle", "WM/Genre"
+                , "WM/Track", "WM/TrackNumber", "WM/Year" };
+
         public static string MediaPlayerLogo = @"
      |**\/**|        |*(*)             |*|
      |*\**/*| ___  __|*|_  __ _   _ __ |*| __ _ _   _  ___ _ __

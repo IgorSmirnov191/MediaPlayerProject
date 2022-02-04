@@ -9,13 +9,18 @@ namespace ConsoleMusicPlayer
     {
         public static WMPPlayState playerPlayStatus { get; set; }
         public static PlayerStatus playerStatus { get; set; }
-
+        /// <summary>
+        /// Event handler of windows media player PlayStateChange event 
+        /// </summary>
+        /// <param name="NewState"></param>
         private static void Player_PlayStateChange(int NewState)
         {
             playerPlayStatus = (WMPPlayState)NewState;
         }
-
-        ///todo mw check object pMediaObject
+        /// <summary>
+        /// Event handler of windows media player MediaError event 
+        /// </summary>
+        /// <param name="pMediaObject"></param>
         private static void Player_MediaError(object pMediaObject)
         {
             playerStatus = PlayerStatus.Error;
@@ -44,6 +49,12 @@ namespace ConsoleMusicPlayer
             }
         }
 
+        /// <summary>
+        /// Simple text parser with cancellation
+        /// </summary>
+        /// <param name="CancelInputKey"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public static string SimpleUserInputParser(ConsoleKey CancelInputKey)
         {
             ConsoleKeyInfo cki_Key;
@@ -109,10 +120,19 @@ namespace ConsoleMusicPlayer
             return inputStr.ToString();
         }
 
-        private static void ChangeVolume(WindowsMediaPlayer player)
+        /// <summary>
+        /// Change the volume level of windows media player with recurcive error message handling
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="hoffset"></param>
+        private static void ChangeVolume(WindowsMediaPlayer player, int hoffset)
         {
-            Console.WriteLine($"{StringResources.InputVolumeLevel} Volume({player.settings.volume}) :");
+            Console.CursorTop = hoffset;
+            Console.CursorLeft = 0;
+            Console.Write($"{StringResources.InputVolumeLevel} Volume({player.settings.volume}):");
+            int offset = Console.CursorLeft;
             string inputLevel = SimpleUserInputParser(ConsoleKey.Escape);
+
             if (int.TryParse(inputLevel, out int level))
             {
                 if (level >= 0 && level <= 100)
@@ -121,29 +141,33 @@ namespace ConsoleMusicPlayer
                 }
                 else
                 {
-                    Console.WriteLine($"{StringResources.VolumeLevelInfo} {StringResources.MessageRepeat}");
-                    ChangeVolume(player);
+                    Console.CursorLeft = offset;
+                    Console.CursorTop = hoffset;
+                    Console.WriteLine(new String(' ', inputLevel.Length));
+                    Console.Write($"{StringResources.VolumeLevelInfo} {StringResources.MessageRepeat}");
+                    ChangeVolume(player, hoffset);
                 }
             }
             else
             {
-                Console.WriteLine($"{StringResources.VolumeLevelErrorInfo} {StringResources.MessageRepeat}");
-                ChangeVolume(player);
+                Console.CursorLeft = offset;
+                Console.CursorTop = hoffset;
+                Console.WriteLine(new String(' ', inputLevel.Length));
+                Console.Write($"{StringResources.VolumeLevelErrorInfo} {StringResources.MessageRepeat}");
+                ChangeVolume(player, hoffset);
             }
         }
-
-        private static void PrintMetaData(IWMPMedia media)
+        /// <summary>
+        ///  Display meta data of current media source
+        /// </summary>
+        /// <param name="media"></param>
+        /// <param name="metadatakeys"></param>
+        private static void PrintMetaData(IWMPMedia media, string [] metadatakeys)
         {
-            Console.WriteLine($"Author : {media.getItemInfo("Author")}");
-            Console.WriteLine($"Bitrate : {media.getItemInfo("Bitrate")}");
-            Console.WriteLine($"Duration : {media.getItemInfo("Duration")}");
-            Console.WriteLine($"FileSize : {media.getItemInfo("FileSize")}");
-            Console.WriteLine($"FileType : {media.getItemInfo("FileType")}");
-            Console.WriteLine($"MediaType : {media.getItemInfo("MediaType")}");
-            Console.WriteLine($"Title : {media.getItemInfo("Title")}");
-            Console.WriteLine($"WM/Genre : {media.getItemInfo("WM/Genre")}");
-            Console.WriteLine($"WM/Track : {media.getItemInfo("WM/Track")}");
-            Console.WriteLine($"WM/Year : {media.getItemInfo("WM/Year")}");
+            foreach (string key in metadatakeys)
+            {
+                Console.WriteLine($"{key} : {media.getItemInfo(key)}");
+            }
         }
 
         private static void Main(string[] args)
@@ -155,6 +179,7 @@ namespace ConsoleMusicPlayer
             player.MediaError +=
                 new WMPLib._WMPOCXEvents_MediaErrorEventHandler(Player_MediaError);
             UserKeys userKey = UserKeys.None;
+            int offset = Console.CursorLeft;
             try
             {
                 while (playerStatus != PlayerStatus.Abort)
@@ -163,16 +188,22 @@ namespace ConsoleMusicPlayer
                         (playerPlayStatus == WMPPlayState.wmppsReady &&
                         playerStatus == PlayerStatus.Error))
                     {
+                        Console.Clear();
+                        Console.CursorLeft = offset;
+                        Console.WriteLine(StringResources.MediaPlayerLogo);
+                        Console.WriteLine(StringResources.MediaPlayerPicture);
                         if (playerStatus == PlayerStatus.Error)
                         {
-                            Console.WriteLine();
                             Console.WriteLine(StringResources.MediaErrorInfo);
                         }
-
-                        if (userKey != UserKeys.Unknown)
+                        else
                         {
-                            Console.Write(StringResources.ShortUserMenu);
+                            Console.WriteLine();
                         }
+
+                        Console.WriteLine();
+                        Console.WriteLine();
+                        Console.Write(StringResources.ShortUserMenu);
 
                         cki_Key = Console.ReadKey(true);
                         userKey = TranslateInputToUserKeys(cki_Key.KeyChar);
@@ -188,26 +219,44 @@ namespace ConsoleMusicPlayer
                         playerStatus != PlayerStatus.None &&
                         playerStatus != PlayerStatus.Error)
                     {
-                        if (userKey == UserKeys.None)
+                        Console.Clear();
+                        Console.CursorLeft = offset;
+                        Console.WriteLine(StringResources.MediaPlayerLogo);
+
+                        if (userKey != UserKeys.None
+                            && playerPlayStatus == WMPPlayState.wmppsStopped)
+                        {
+                            Console.WriteLine(StringResources.MediaPlayerPicture);
+                        }
+                        else if (userKey == UserKeys.None ||
+                             playerPlayStatus == WMPPlayState.wmppsPlaying ||
+                             playerPlayStatus == WMPPlayState.wmppsPaused ||
+                             playerPlayStatus == WMPPlayState.wmppsScanForward)
                         {
                             Console.WriteLine();
-                            PrintMetaData(player.currentMedia);
+                            PrintMetaData(player.currentMedia, StringResources.metadataquery);
                         }
+
                         if (player.settings.mute)
                         {
-                            Console.WriteLine();
                             Console.WriteLine(StringResources.MutingInfo);
+                        }
+                        else
+                        {
+                            Console.WriteLine();
                         }
                         if (player.settings.volume == 0)
                         {
-                            Console.WriteLine();
                             Console.WriteLine(StringResources.VolumeNullLevelInfo);
                         }
-                        if (userKey != UserKeys.Unknown)
+                        else
                         {
                             Console.WriteLine();
-                            Console.Write(StringResources.LongUserMenu);
                         }
+
+                        Console.WriteLine();
+                        Console.Write(StringResources.LongUserMenu);
+
                         cki_Key = Console.ReadKey(true);
                         userKey = TranslateInputToUserKeys(cki_Key.KeyChar);
                         Console.Write(userKey.ToString());
@@ -262,7 +311,7 @@ namespace ConsoleMusicPlayer
                         case UserKeys.Volume:
                             {
                                 Console.WriteLine();
-                                ChangeVolume(player);
+                                ChangeVolume(player, Console.CursorTop);
                                 break;
                             }
                         case UserKeys.Mute:
@@ -276,7 +325,6 @@ namespace ConsoleMusicPlayer
                             }
                         default:
                             {
-                                Console.WriteLine();
                                 Console.WriteLine($"Een verkeerde toets was gedrukt. {StringResources.MessageRepeat}");
                                 break;
                             }
@@ -287,13 +335,6 @@ namespace ConsoleMusicPlayer
             {
                 Console.WriteLine();
                 Console.WriteLine(ex.Message);
-            }
-            finally
-            {
-                if (player != null)
-                {
-                    player.controls.stop();
-                }
             }
         }
     }
