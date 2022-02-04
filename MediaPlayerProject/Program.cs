@@ -269,7 +269,7 @@ namespace ConsoleMusicPlayer
                         case UserKeys.Esc:
                             {
                                 playerStatus = PlayerStatus.Abort;
-                                throw new Exception($"Processing is gestopt. {StringResources.MessageRepeat} later");
+                                throw new ApplicationException($"Processing is gestopt. {StringResources.MessageRepeat} later");
                             }
 
                         case UserKeys.OpenFile:
@@ -334,10 +334,24 @@ namespace ConsoleMusicPlayer
                     }
                 }
             }
+            catch (ApplicationException ex)
+            {
+                Console.WriteLine();
+                Console.WriteLine(ex.Message);
+                Environment.Exit(1);
+            }
             catch (Exception ex)
             {
                 Console.WriteLine();
                 Console.WriteLine(ex.Message);
+            }
+            finally
+            {
+                if (player != null)
+                {
+                    player.controls.stop();
+                }
+            
             }
         }
     }
