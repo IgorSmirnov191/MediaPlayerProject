@@ -9,16 +9,18 @@ namespace ConsoleMusicPlayer
     {
         public static WMPPlayState playerPlayStatus { get; set; }
         public static PlayerStatus playerStatus { get; set; }
+
         /// <summary>
-        /// Event handler of windows media player PlayStateChange event 
+        /// Event handler of windows media player PlayStateChange event
         /// </summary>
         /// <param name="NewState"></param>
         private static void Player_PlayStateChange(int NewState)
         {
             playerPlayStatus = (WMPPlayState)NewState;
         }
+
         /// <summary>
-        /// Event handler of windows media player MediaError event 
+        /// Event handler of windows media player MediaError event
         /// </summary>
         /// <param name="pMediaObject"></param>
         private static void Player_MediaError(object pMediaObject)
@@ -157,12 +159,13 @@ namespace ConsoleMusicPlayer
                 ChangeVolume(player, hoffset);
             }
         }
+
         /// <summary>
         ///  Display meta data of current media source
         /// </summary>
         /// <param name="media"></param>
         /// <param name="metadatakeys"></param>
-        private static void PrintMetaData(IWMPMedia media, string [] metadatakeys)
+        private static void PrintMetaData(IWMPMedia media, string[] metadatakeys)
         {
             foreach (string key in metadatakeys)
             {
